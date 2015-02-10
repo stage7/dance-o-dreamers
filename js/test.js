@@ -21,6 +21,7 @@ var keyDown = false;
 //----
 var tNow = 0;
 var start;
+var timer;
 
 //-----
 //SONGS
@@ -42,25 +43,31 @@ function startGame(){
 	for(var i=0; i<song.song.length; i++){
 		stepsArray[song.song[i][0]] = [song.song[i][1].length, true];
 	}
+	timer = new Tock({
+		interval: 10,
+		callback: function(){gameLoop(song);}
+	});
+	
 	console.log(stepsArray);
-	gameLoop(song);
+	timer.start();
+	//gameLoop(song);
 }
 
 function gameLoop(song) {
 	context.clearRect(0, 0, canvas.width, canvas.height);
 	testKeys();
 
-	var tDelta = tNow;
-	var d = new Date();
-	var t = d.toLocaleTimeString();
-	tNow = d-start;
-	tDelta = tNow - tDelta;
+	// var tDelta = tNow;
+	// var d = new Date();
+	// var t = d.toLocaleTimeString();
+	// tNow = d-start;
+	// tDelta = tNow - tDelta;
 
-	drawSong(song, tNow);
+	drawSong(song, timer.lap());
 
-	setTimeout(function(){
-		gameLoop(song);
-	}, 10);
+	// setTimeout(function(){
+	// 	gameLoop(song);
+	// }, 10);
 }
 
 function testKeys() {
@@ -108,8 +115,8 @@ function testKeys() {
 	} 
 }
 
-function drawSong(song) {
-	var currentMeasure = Math.round((song.bpm/60)*(tNow/1000)*10000) / 10000;
+function drawSong(song, time) {
+	var currentMeasure = Math.round((song.bpm/60)*(time/1000)*10000) / 10000;
 	//console.log(currentMeasure);
 
 	for(var i=0; i<song.song.length; i++){
