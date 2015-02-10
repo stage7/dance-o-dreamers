@@ -1,0 +1,18 @@
+{
+    "artist": "Touhou Anime",
+    "title": "幻想万華鏡 ~The Memories of Phantasm~【東方】",
+    "bpm": 138,
+    "video": "./video/memories.mp4",
+    "difficulty": 3,
+    "measure": 4,
+    "song": [
+        [3, [1]],
+        [3.5, [2]],
+        [4, [1, 2]],
+        [6, [3]],
+        [6.5, [4]],
+        [7, [2]],
+        [7.5, [1]],
+        [8, [3, 4]]
+   ]
+}
