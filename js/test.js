@@ -26,6 +26,7 @@ var timer;
 //-----
 //SONGS
 //-----
+var errorMargin = 0.5; // maximum threshold in bpm by default/exceed to successfully play a step
 load_songs();
 
 //TODO: Change to load proper song
@@ -35,14 +36,27 @@ function startGame(){
 	start = new Date();
 
 	//Initialize some song stuff: array of successful steps, step error margin, etc.
-	//Format of stepsArray item: {step_number: [steps, is_playable]}
+	//Format of stepsArray object: {step_number: [steps, is_playable, margin_by_default, margin_by_excess]}
 	//	float	step_number: equals measure defined in song.js
 	//	int		steps: number of steps needed to complete this step, equals length of second item in each song item
 	//	bool	is_playable: defines if this note can still be played or otherwise was missed, defaults to true
+	//	float	margin_by_default: the amount of measures a step can be played before the actual step happens
+	//	float	margin_by_excess: the amount of measures a step can be played after the actual step happens
 	var stepsArray = {};
 	for(var i=0; i<song.song.length; i++){
-		stepsArray[song.song[i][0]] = [song.song[i][1].length, true];
+		if(i==0){
+			var marginByDefault = song.song[i][0] - errorMargin;
+		}else{
+			var marginByDefault = song.song[i][0] - Math.min(errorMargin, (song.song[i][0]-song.song[i-1][0])/2);
+		}
+		if(i==song.song.length-1){
+			var marginByExcess = song.song[i][0] + errorMargin;
+		}else{
+			var marginByExcess = song.song[i][0] + Math.min(errorMargin, (song.song[i+1][0]-song.song[i][0])/2);
+		}
+		stepsArray[song.song[i][0]] = [song.song[i][1].length, true, marginByDefault, marginByExcess];
 	}
+
 	timer = new Tock({
 		interval: 10,
 		callback: function(){gameLoop(song);}
