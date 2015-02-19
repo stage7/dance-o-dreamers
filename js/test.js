@@ -2,6 +2,7 @@
 //KEYS
 //----
 var keyState = {};
+var keyStatePrevious = {};
 
 window.addEventListener('keydown',function(e){
 	keyState[e.keyCode || e.which] = true;
@@ -16,12 +17,35 @@ var keyUp = false;
 var keyRight = false;
 var keyDown = false;
 
+var arrowKeys = new Array();
+
+var KEY_LEFT = 37;
+var KEY_UP = 38;
+var KEY_RIGHT = 39;
+var KEY_DOWN = 40;
+
+var KEY_A = 65;
+var KEY_W = 87;
+var KEY_D = 69;
+var KEY_S = 83;
+
+var ARROW_LEFT = 0;
+var ARROW_UP = 1;
+var ARROW_DOWN = 2;
+var ARROW_RIGHT = 3;
+
 //----
 //TIME
 //----
 var tNow = 0;
 var start;
 var timer;
+
+//-----------------
+//SOME USEFUL STUFF
+//-----------------
+var playableSteps;
+var playableStepsArray = new Array();
 
 //-----
 //SONGS
@@ -95,22 +119,22 @@ function gameLoop(song) {
 function testKeys() {
 	/* Keys down */
 	if (keyState[37] || keyState[65]){ // left, 'a'
-		console.log("left");
+		//console.log("left");
 		keyLeft = true;
 		context.drawImage(img[0],32,80,96,96);
 	}
 	if (keyState[38] || keyState[87]){ // up, 'w'
-		console.log("up");
+		//console.log("up");
 		keyUp = true;
 		context.drawImage(img[1],192,80,96,96);
 	}
 	if (keyState[39] || keyState[68]){ // right, 'd'
-		console.log("right");
+		//console.log("right");
 		keyRight = true;
 		context.drawImage(img[3],512,80,96,96);
 	}
 	if (keyState[40] || keyState[83]){ // down, 's'
-		console.log("down");
+		//console.log("down");
 		keyDown = true;
 		context.drawImage(img[2],352,80,96,96);
 	}
@@ -141,14 +165,43 @@ function drawSong(song, time) {
 	//if(stepsArrayKeys.hasOwnProperty(currentStep))
 	//	console.log(stepsArray[stepsArrayKeys[currentStep]].margin_by_excess + " -- " + currentMeasure);
 
+	//--------------
+	//PAINT THE SONG
+	//--------------
 	for(var i=0; i<song.song.length; i++){
 		for(var noteSteps=0; noteSteps<song.song[i][1].length; noteSteps++){
 			//console.log(song.song[i][1][noteSteps]);
 			var yPos = song.song[i][0]*(96+32*song.difficulty)-((96+32*song.difficulty)*currentMeasure)+64;
-			if(yPos > -128 && yPos < 1088)
+			if(yPos > -128 && yPos < 1088 && stepsArray[song.song[i][0]].is_playable)
 				context.drawImage(img[song.song[i][1][noteSteps]],16+song.song[i][1][noteSteps]*160,yPos);
 		}
 	}
+
+	//----------
+	//CHECK KEYS
+	//----------
+	//console.log(keyState);
+	
+	if(song.song.hasOwnProperty(currentStep)){
+		playableSteps = song.song[currentStep][1];
+		playableStepsArray.length = 0;
+		for(var i=0; i<4; i++){
+			if(playableSteps.indexOf(i) > -1)
+				playableStepsArray.push(true);
+			else
+				playableStepsArray.push(false);
+		}
+		arrowKeys = [
+			typeof keyState[KEY_LEFT] === "undefined" ? false : keyState[KEY_LEFT],
+			typeof keyState[KEY_UP] === "undefined" ? false : keyState[KEY_UP],
+			typeof keyState[KEY_DOWN] === "undefined" ? false : keyState[KEY_DOWN],
+			typeof keyState[KEY_RIGHT] === "undefined" ? false : keyState[KEY_RIGHT]
+		];
+		if(playableStepsArray.equals(arrowKeys))
+			console.log("OK");
+		//console.log(arrowKeys);
+	}
+	
 
 	//console.log(Math.floor(currentMeasure));
 	if(stepsArrayKeys.hasOwnProperty(currentStep)){
