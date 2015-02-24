@@ -3,6 +3,7 @@
 //----
 var keyState = {};
 var keyStatePrevious = {};
+var countKeyStatePrevious = 0;
 
 window.addEventListener('keydown',function(e){
 	keyState[e.keyCode || e.which] = true;
@@ -17,7 +18,8 @@ var keyUp = false;
 var keyRight = false;
 var keyDown = false;
 
-var arrowKeys = new Array();
+var arrowKeys = [false, false, false, false];
+var countArrowKeys = 0;
 
 var KEY_LEFT = 37;
 var KEY_UP = 38;
@@ -34,6 +36,9 @@ var ARROW_UP = 1;
 var ARROW_DOWN = 2;
 var ARROW_RIGHT = 3;
 
+//Only compare steps that are set to true, set to false those that are pressed when a new note is in play
+var canPlay = [true, true, true, true];
+
 //----
 //TIME
 //----
@@ -46,6 +51,11 @@ var timer;
 //-----------------
 var playableSteps;
 var playableStepsArray = new Array();
+var playableStepsCount = 0;
+var noteError = false;
+var currentRightSteps = 0;
+var fakeSteps = 0;
+var marginToAdd;
 
 //-----
 //SONGS
@@ -93,7 +103,7 @@ function startGame(){
 		callback: function(){gameLoop(song);}
 	});
 	
-	console.log(stepsArray);
+	//console.log(stepsArray);
 	//console.log(stepsArrayKeys);
 	timer.start();
 	//gameLoop(song);
@@ -181,13 +191,18 @@ function drawSong(song, time) {
 	//CHECK KEYS
 	//----------
 	//console.log(keyState);
-	
 	if(song.song.hasOwnProperty(currentStep)){
+		noteError = false;
+		currentRightSteps = 0;
+		fakeSteps = 0;
 		playableSteps = song.song[currentStep][1];
+		playableStepsCount = 0;
 		playableStepsArray.length = 0;
 		for(var i=0; i<4; i++){
-			if(playableSteps.indexOf(i) > -1)
+			if(playableSteps.indexOf(i) > -1){
 				playableStepsArray.push(true);
+				playableStepsCount++;
+			}
 			else
 				playableStepsArray.push(false);
 		}
@@ -197,18 +212,106 @@ function drawSong(song, time) {
 			typeof keyState[KEY_DOWN] === "undefined" ? false : keyState[KEY_DOWN],
 			typeof keyState[KEY_RIGHT] === "undefined" ? false : keyState[KEY_RIGHT]
 		];
-		if(playableStepsArray.equals(arrowKeys))
-			console.log("OK");
-		//console.log(arrowKeys);
+		//if(playableStepsArray.equals(arrowKeys))
+			//console.log("OK");
+
+		//-------------------------------------------------------------
+		//CHECKS IF NOTE IS PLAYABLE AND MEASURE IS WITHIN ERROR MARGIN
+		//-------------------------------------------------------------
+		if(
+			currentMeasure >= stepsArray[stepsArrayKeys[currentStep]].margin_by_default &&
+			currentMeasure <= stepsArray[stepsArrayKeys[currentStep]].margin_by_excess &&
+			stepsArray[stepsArrayKeys[currentStep]].is_playable
+		){
+			//Ignore if the number of pressed steps is lower than that of the previous iteration
+			/*countArrowKeys = 0;
+			for(var i=0; i<4; i++){
+				if(arrowKeys[i])
+					countArrowKeys++;
+			}
+			
+			if(countArrowKeys == 0)
+				canPlay = true;
+
+			countKeyStatePrevious = 0;
+			for(var i=0; i<4; i++){
+				if(keyStatePrevious[i])
+					countKeyStatePrevious++;
+			}
+			if(countArrowKeys >= countKeyStatePrevious && canPlay){
+				//For all that's holy WTF am I doing here?
+			}*/
+			//Compare canPlay's true items with pressed steps and valid note steps
+			for(var i=0; i<4; i++){
+				//If the player releases a step that is marked as fake, mark it as playable
+				if(canPlay[i] == false && arrowKeys[i] == false){
+					canPlay[i] = true;
+				}
+
+				if(noteError == false && canPlay[i] == true){
+					if(arrowKeys[i] != playableStepsArray[i] && playableStepsArray[i] == false)
+						noteError = true;
+					else if(arrowKeys[i] == true && playableStepsArray[i] == true)
+						currentRightSteps++;
+				}
+				//If the player has an unplayable step pressed, the note cannot be held as valid
+				if(noteError == false && canPlay[i] == false && arrowKeys[i] == true)
+					fakeSteps++;
+			}
+
+			//------------------------------------------------------------
+			//THE NOTE IS PLAYABLE AND ALL THE STEPS ARE RIGHT. WELL DONE!
+			//------------------------------------------------------------
+			if(playableStepsArray.equals(arrowKeys) && fakeSteps == 0 && noteError == false){
+				console.log("OK");
+				//TODO: Give some points according to error margin
+				marginToAdd = Math.min(stepsArray[stepsArrayKeys[currentStep]].margin_by_excess - currentMeasure, errorMargin);
+				if(stepsArray.hasOwnProperty(currentStep+1)){
+					stepsArray[stepsArrayKeys[currentStep]].margin_by_default = Math.max(stepsArray[stepsArrayKeys[currentStep]] - marginToAdd, stepsArray[stepsArrayKeys[currentStep]] - errorMargin);
+				}
+				//Set canPlay according to pressed steps
+				for(var i=0; i<4; i++)
+					canPlay[i] = !arrowKeys[i];
+				stepsArray[stepsArrayKeys[currentStep]].is_playable = false;
+				currentStep++;
+				//console.log("-----------");
+			}
+
+			//------------------------------------
+			//OOPS, MISTAKE MADE, NEXT NOTE ANYWAY
+			//------------------------------------
+			if(noteError == true){
+				console.log("ERROR");
+				var marginToAdd = Math.min(stepsArray[stepsArrayKeys[currentStep]].margin_by_excess - currentMeasure, errorMargin);
+				if(stepsArray.hasOwnProperty(currentStep+1)){
+					stepsArray[stepsArrayKeys[currentStep]].margin_by_default = Math.max(stepsArray[stepsArrayKeys[currentStep]] - marginToAdd, stepsArray[stepsArrayKeys[currentStep]] - errorMargin);
+				}
+				//Set canPlay according to pressed steps
+				for(var i=0; i<4; i++)
+					canPlay[i] = !arrowKeys[i];
+				stepsArray[stepsArrayKeys[currentStep]].is_playable = false;
+				currentStep++;
+				//console.log("-----------");
+			}
+		}
+
+		//console.log(stepsArray[stepsArrayKeys[currentStep]]);
 	}
-	
 
 	//console.log(Math.floor(currentMeasure));
 	if(stepsArrayKeys.hasOwnProperty(currentStep)){
 		if(currentMeasure > stepsArray[stepsArrayKeys[currentStep]].margin_by_excess)
 			stepsArray[stepsArrayKeys[currentStep]].is_playable = false;
 
-		if(currentMeasure > stepsArray[stepsArrayKeys[currentStep]].margin_by_excess && !stepsArray[stepsArrayKeys[currentStep]].is_playable)
+		if(currentMeasure > stepsArray[stepsArrayKeys[currentStep]].margin_by_excess && !stepsArray[stepsArrayKeys[currentStep]].is_playable){
 			currentStep++;
+			console.log("NO ACTION");
+			//console.log("-----------");
+		}
 	}
+
+	//--------------------------------------------------
+	//STORE CURRENT STATE OF KEYS FOR THE NEXT ITERATION
+	//--------------------------------------------------
+	keyStatePrevious = arrowKeys;
 }
