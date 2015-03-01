@@ -1,3 +1,6 @@
+var audioContext;
+var bufferLoader;
+var source;
 var songCount = 0;
 var songList = [
 	"memories"
@@ -24,6 +27,20 @@ function addSongCount(){
 		//console.log(songs);
 		startGame();
 	}
+}
+
+function loadAudio(song, file){
+	// Fix up prefixing
+	window.AudioContext = window.AudioContext || window.webkitAudioContext;
+	audioContext = new AudioContext();
+
+	bufferLoader = new BufferLoader(
+	  audioContext,
+	  ['./songs/' + song + '/' + file],
+	  postLoadSong
+	  );
+
+	bufferLoader.load();
 }
 
 // ----------------------------------------
