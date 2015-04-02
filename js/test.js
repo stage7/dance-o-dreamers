@@ -57,11 +57,17 @@ var currentRightSteps = 0;
 var fakeSteps = 0;
 var marginToAdd;
 var marginPoints;
+var currentMeasure = 0;
 
 //-----
 //SCORE
 //-----
 var score; //points, combo, life, perfect, awesome, great, ok, bad, miss
+
+//-----
+//VIDEO
+//-----
+var videoTag = document.getElementById("video");
 
 //-----
 //SONGS
@@ -116,15 +122,23 @@ function startGame(){
 		miss: 0
 	};
 
+	videoTag.src = "./songs/memories/" + song.video;
+	
+	loadAudio("memories", song.audio);
+
+	// videoTag.addEventListener('play', function(){
+	// 	drawVideo(this, context, canvasWidth, canvasHeight);
+	// },false);
+	//videoTag.play();
+
+}
+
+function postLoadSong(bufferList) {
 	timer = new Tock({
 		interval: 10,
 		callback: function(){gameLoop(song);}
 	});
-
-	loadAudio("memories", song.audio);
-}
-
-function postLoadSong(bufferList) {
+	
 	// Create two sources and play them both together.
 	source = audioContext.createBufferSource();
 	source.buffer = bufferList[0];
@@ -133,11 +147,23 @@ function postLoadSong(bufferList) {
 
 	//console.log(stepsArray);
 	//console.log(stepsArrayKeys);
+
 	timer.start();
+	videoTag.play();
+	videoTag.volume = 0;
 	//gameLoop(song);
 }
 
+function drawVideo(videoTag, context, canvasWidth, canvasHeight){
+	if(videoTag.paused || videoTag.ended)
+		return false;
+	//context.drawImage(videoTag, 0, 0, canvasWidth, canvasHeight);
+	//context.drawImage(videoTag, 0, 0, 160, 90);
+}
+
 function gameLoop(song) {
+	//context.fillStyle = "#EEEEEE";
+	//context.fillRect(0, 0, canvas.width, canvas.height);
 	context.clearRect(0, 0, canvas.width, canvas.height);
 	testKeys();
 
@@ -157,51 +183,64 @@ function gameLoop(song) {
 function testKeys() {
 	/* Keys down */
 	if (keyState[37] || keyState[65]){ // left, 'a'
-		//console.log("left");
 		keyLeft = true;
-		context.drawImage(img[0],32,80,96,96);
+		//context.drawImage(img[0],480+32,80,96,96);
+		context.drawImage(img[4],128*(Math.floor(currentMeasure)%4),512,128,128,480+16,80,128,128);
 	}
 	if (keyState[38] || keyState[87]){ // up, 'w'
 		//console.log("up");
 		keyUp = true;
-		context.drawImage(img[1],192,80,96,96);
+		//context.drawImage(img[1],480+192,80,96,96);
+		context.drawImage(img[4],128*(Math.floor(currentMeasure)%4),640,128,128,480+176,80,128,128);
 	}
 	if (keyState[39] || keyState[68]){ // right, 'd'
 		//console.log("right");
 		keyRight = true;
-		context.drawImage(img[3],512,80,96,96);
+		//context.drawImage(img[3],480+512,80,96,96);
+		context.drawImage(img[4],128*(Math.floor(currentMeasure)%4),768,128,128,480+496,80,128,128);
 	}
 	if (keyState[40] || keyState[83]){ // down, 's'
 		//console.log("down");
 		keyDown = true;
-		context.drawImage(img[2],352,80,96,96);
+		//context.drawImage(img[2],480+352,80,96,96);
+		context.drawImage(img[4],128*(Math.floor(currentMeasure)%4),896,128,128,480+336,80,128,128);
 	}
 
 	/* Keys up */
 	if (!keyState[37] && !keyState[65]){ // left, 'a'
-		//console.log("no left");
 		keyLeft = false;
-		context.drawImage(img[0],16,64);
+		//context.drawImage(img[0],480+16,64);
+		context.drawImage(img[4],128*(Math.floor(currentMeasure)%4),0,128,128,480+16,80,128,128);
 	}
 	if (!keyState[38] && !keyState[87]){ // up, 'w'
 		keyUp = false;
-		context.drawImage(img[1],176,64);
+		//context.drawImage(img[1],480+176,64);
+		context.drawImage(img[4],128*(Math.floor(currentMeasure)%4),128,128,128,480+176,80,128,128);
 	}
 	if (!keyState[39] && !keyState[68]){ // right, 'd'
 		keyRight = false;
-		context.drawImage(img[3],496,64);
+		//context.drawImage(img[3],480+496,64);
+		context.drawImage(img[4],128*(Math.floor(currentMeasure)%4),256,128,128,480+496,80,128,128);
 	}
 	if (!keyState[40] && !keyState[83]){ // down, 's'
 		keyDown = false;
-		context.drawImage(img[2],336,64);
+		//context.drawImage(img[2],480+336,64);
+		context.drawImage(img[4],128*(Math.floor(currentMeasure)%4),384,128,128,480+336,80,128,128);
 	} 
 }
 
 function drawSong(song, time) {
-	var currentMeasure = Math.round((song.bpm/60)*(time/1000)*10000) / 10000;
+	//drawVideo(videoTag, context, canvasWidth, canvasHeight);
+	currentMeasure = Math.round((song.bpm/60)*(time/1000)*10000) / 10000;
 	//console.log(currentStep);
 	//if(stepsArrayKeys.hasOwnProperty(currentStep))
 	//	console.log(stepsArray[stepsArrayKeys[currentStep]].margin_by_excess + " -- " + currentMeasure);
+
+	//---------
+	//INTERFACE
+	//---------
+	context.fillStyle = "rgba(255, 255, 255, .5)";
+	roundRect(context, 480, 16, 640, 760, 20, true, false);
 
 	//--------------
 	//PAINT THE SONG
@@ -210,10 +249,30 @@ function drawSong(song, time) {
 		for(var noteSteps=0; noteSteps<song.song[i][1].length; noteSteps++){
 			//console.log(song.song[i][1][noteSteps]);
 			var yPos = song.song[i][0]*(96+32*song.difficulty)-((96+32*song.difficulty)*currentMeasure)+64;
-			if(yPos > -128 && yPos < 1088 && stepsArray[song.song[i][0]].is_playable)
-				context.drawImage(img[song.song[i][1][noteSteps]],16+song.song[i][1][noteSteps]*160,yPos);
+			if(yPos > -128 && yPos < 1088 && stepsArray[song.song[i][0]].is_playable){
+				switch(song.song[i][1][noteSteps]){
+					case 0: //left
+					case 1: //up
+						context.drawImage(img[4],128*(Math.floor(currentMeasure)%4),1024+song.song[i][1][noteSteps]*128,128,128,480+16+song.song[i][1][noteSteps]*160,yPos,128,128);
+					break;
+					case 2: //right
+					case 3: //down
+						context.drawImage(img[4],128*(Math.floor(currentMeasure)%4),1024+(5-song.song[i][1][noteSteps])*128,128,128,480+16+song.song[i][1][noteSteps]*160,yPos,128,128);
+					break;
+				}
+			}
 		}
 	}
+
+	context.lineWidth = 3;
+	context.strokeStyle = "black";
+	context.fillStyle = "white";
+	context.font = "40pt nukamiso";
+	context.strokeText(song.title, 0, 880);
+	context.fillText(song.title, 0, 880);
+	context.font = "20pt nukamiso";
+	context.strokeText(song.artist, 0, 820);
+	context.fillText(song.artist, 0, 820);
 
 	//----------
 	//CHECK KEYS
@@ -251,24 +310,6 @@ function drawSong(song, time) {
 			currentMeasure <= stepsArray[stepsArrayKeys[currentStep]].margin_by_excess &&
 			stepsArray[stepsArrayKeys[currentStep]].is_playable
 		){
-			//Ignore if the number of pressed steps is lower than that of the previous iteration
-			/*countArrowKeys = 0;
-			for(var i=0; i<4; i++){
-				if(arrowKeys[i])
-					countArrowKeys++;
-			}
-			
-			if(countArrowKeys == 0)
-				canPlay = true;
-
-			countKeyStatePrevious = 0;
-			for(var i=0; i<4; i++){
-				if(keyStatePrevious[i])
-					countKeyStatePrevious++;
-			}
-			if(countArrowKeys >= countKeyStatePrevious && canPlay){
-				//For all that's holy WTF am I doing here?
-			}*/
 			//Compare canPlay's true items with pressed steps and valid note steps
 			for(var i=0; i<4; i++){
 				//If the player releases a step that is marked as fake, mark it as playable
@@ -326,6 +367,7 @@ function drawSong(song, time) {
 					score.points = score.points + Math.round((errorMargin - marginPoints) * (score.combo + 1) * song.difficulty * 500);
 					//score.life
 				}
+				score.life = Math.min(100, score.life + (1 / song.difficulty) * (errorMargin - marginPoints) * 10);
 				if(stepsArray.hasOwnProperty(currentStep+1)){
 					stepsArray[stepsArrayKeys[currentStep]].margin_by_default = Math.max(stepsArray[stepsArrayKeys[currentStep]] - marginToAdd, stepsArray[stepsArrayKeys[currentStep]] - errorMargin);
 				}
@@ -334,7 +376,7 @@ function drawSong(song, time) {
 					canPlay[i] = !arrowKeys[i];
 				stepsArray[stepsArrayKeys[currentStep]].is_playable = false;
 				currentStep++;
-				console.log(score);
+				//console.log(score);
 				//console.log("-----------");
 			}
 
@@ -349,8 +391,8 @@ function drawSong(song, time) {
 				//-----------------
 				//TODO: life calculation
 				score.miss++;
+				score.life = Math.max(0, score.life - Math.sqrt(score.combo) - song.difficulty * 1.5);
 				score.combo = 0;
-				//score.life
 				if(stepsArray.hasOwnProperty(currentStep+1)){
 					stepsArray[stepsArrayKeys[currentStep]].margin_by_default = Math.max(stepsArray[stepsArrayKeys[currentStep]] - marginToAdd, stepsArray[stepsArrayKeys[currentStep]] - errorMargin);
 				}
@@ -359,7 +401,7 @@ function drawSong(song, time) {
 					canPlay[i] = !arrowKeys[i];
 				stepsArray[stepsArrayKeys[currentStep]].is_playable = false;
 				currentStep++;
-				console.log(score);
+				//console.log(score);
 				//console.log("-----------");
 			}
 		}
@@ -378,17 +420,22 @@ function drawSong(song, time) {
 			//-----------------
 			//TODO: life calculation
 			score.miss++;
+			score.life = Math.max(0, score.life - Math.sqrt(score.combo) - song.difficulty * 1.5);
 			score.combo = 0;
-			//score.life
 			currentStep++;
-			console.log(score);
+			//console.log(score);
 			//console.log("NO ACTION");
 			//console.log("-----------");
 		}
 	}
 
-	//--------------------------------------------------
-	//STORE CURRENT STATE OF KEYS FOR THE NEXT ITERATION
-	//--------------------------------------------------
-	keyStatePrevious = arrowKeys;
+	context.fillStyle = "white";
+	context.font = '40pt nukamiso';
+	context.strokeText(padPoints(score.points), 1300, 60);
+	context.fillText(padPoints(score.points), 1300, 60);
+}
+
+function padPoints(score){
+	var score = "000000000" + score;
+	return score.substr(score.length-9);
 }

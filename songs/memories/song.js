@@ -1,13 +1,17 @@
-songs = songs || {};
+songs = songs || {}; // DO NOT modify this line!
 var songName = "memories";
 
 var songData = '' +
 '{' +
+	'"version": 1,' +
 	'"artist": "幽閉サテライト Yuuhei Satellite",' +
-	'"title": "幻想万華鏡 ~The Memories of Phantasm~【東方】",' +
+	'"title": "色は匂へど 散りぬるを Iro wa Nioedo, Chirinuru wo",' +
 	'"bpm": 138,' +
-	'"video": "memories.mp4",' +
-	'"difficulty": 3,' +
+	'"timeAdjustment": 273,' +
+	'"delay": 0,' +
+	'"audio": "memories.mp3",' +
+	'"video": "memories.webm",' +
+	'"difficulty": 2,' +
 	'"measure": 4,' +
 	'"song": [' +
 		'[3, [0]],' +
@@ -62,4 +66,4 @@ var songData = '' +
 '}' +
 '';
 
-eval("songs." + songName + " = songData");
+eval("songs." + songName + " = songData"); // DO NOT modify this line!

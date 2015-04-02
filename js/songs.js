@@ -1,14 +1,19 @@
-var audioContext;
-var bufferLoader;
-var source;
-var songCount = 0;
+// -------------------
+// ADD YOUR SONGS HERE
+// -------------------
+
 var songList = [
 	"memories"
 	];
 
-// -------------------
-// ADD YOUR SONGS HERE
-// -------------------
+// ----------------------------------------
+// DO NOT MODIFY ANYTHING BELOW THIS LINE!!
+// ----------------------------------------
+
+var audioContext;
+var bufferLoader;
+var source;
+var songCount = 0;
 
 //load_json("./songs/memories/song.js");
 
@@ -42,10 +47,6 @@ function loadAudio(song, file){
 
 	bufferLoader.load();
 }
-
-// ----------------------------------------
-// DO NOT MODIFY ANYTHING BELOW THIS LINE!!
-// ----------------------------------------
 
 // Following code by TechSpud (http://stackoverflow.com/users/1368849/techspud)
 // From Stack Overflow (http://stackoverflow.com/a/19364118)

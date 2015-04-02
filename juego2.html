@@ -3,6 +3,23 @@
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<title>TITLE</title>
+	<link rel="stylesheet" type="text/css" href="./css/fonts.css">
+	<style>
+		body {
+			margin: 0;
+			padding: 0;
+		}
+		video {
+			position: absolute;
+			width: 1600px;
+			height: 900px;
+		}
+		canvas {
+			position: absolute;
+			top: 0;
+			left: 0;
+		}
+	</style>
 	<script type="text/javascript" src="./js/init.js"></script>
 	<script type="text/javascript" src="./js/buffer-loader.js"></script>
 	<script type="text/javascript" src="./js/jquery.js"></script>
@@ -14,50 +31,40 @@
 </head>
 
 <body>
-	<!--<div class="measure"></div>
-	<div id="out"></div>
-	<div class="playfield">
-		<div class="keys">
-			<div class="note note1"></div>
-			<div class="note note2"></div>
-			<div class="note note3"></div>
-			<div class="note note4"></div>
-		</div>
-		<div class="roll"></div>
-	</div>-->
+	<script>
+	    // load fonts before loading the game
+	    WebFontConfig = {
+	        custom: {
+	            families: ['nukamiso'],
+	            urls: ['./css/fonts.css']
+	        },
+	        active: function() {
+	            //myMain();
+	        }
+	    };
+	</script>
+	<script src="./js/webfont.js"></script>
 	
-	<canvas id="game" width="640" height="960"></canvas>
+	<video id="video"></video>
+	<canvas id="game" width="1600" height="900"></canvas>
+	<script>
+		/*function myMain(){
+			var canvas = document.getElementById('game');
+			var context = canvas.getContext('2d');
+			var x = 80;
+			var y = 110;
+
+			context.font = '60pt nukamiso';
+			context.lineWidth = 3;
+			// stroke color
+			context.strokeStyle = 'black';
+			context.strokeText('Hello 幻想郷!', x, y);
+		}*/
+	</script>
 
 	<script src="./js/songs.js"></script>
 	<script src="./js/assets.js"></script>
 	<script src="./js/test.js"></script>
 
-	<script>
-
-		/*var songLength = song.length, element = null;
-		for (var i = 0; i < songLength; i++){
-			element = song[i];
-			var height = element[0]*150;
-			var noteLength = element[1].length, elementLength = null;
-			for (var j = 0; j < noteLength; j++){
-				elementLength = element[1][j];
-				switch(elementLength){
-					case 87:
-						$(".roll").append('<p class="note note1 pos'+element[0]*100+'" style="top:'+height+'px"></p>');
-					break;
-					case 83:
-						$(".roll").append('<p class="note note2 pos'+element[0]*100+'" style="top:'+height+'px"></p>');
-					break;
-					case 65:
-						$(".roll").append('<p class="note note3 pos'+element[0]*100+'" style="top:'+height+'px"></p>');
-					break;
-					case 68:
-						$(".roll").append('<p class="note note4 pos'+element[0]*100+'" style="top:'+height+'px"></p>');
-					break;
-				}
-			}
-		}*/
-	</script>
 </body>
-
 </html>
