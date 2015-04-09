@@ -63,6 +63,7 @@ var currentMeasure = 0;
 //SCORE
 //-----
 var score; //points, combo, life, perfect, awesome, great, ok, bad, miss
+var perfectScore = 0; //the best score a player could get in a song meaning he/she would nail every single note to the beat
 
 //-----
 //VIDEO
@@ -121,6 +122,11 @@ function startGame(){
 		bad: 0,
 		miss: 0
 	};
+
+	//Calculate the perfect score for this song
+	for(var i=0; i<song.song.length; i++){
+		perfectScore += errorMargin * (i + 1) * song.difficulty * 2000;
+	}
 
 	videoTag.src = "./songs/memories/" + song.video;
 	
@@ -240,7 +246,8 @@ function drawSong(song, time) {
 	//INTERFACE
 	//---------
 	context.fillStyle = "rgba(255, 255, 255, .5)";
-	roundRect(context, 480, 16, 640, 760, 20, true, false);
+	roundRect(context, 480, 16, 640, 904, 20, true, false);
+	drawLife();
 
 	//--------------
 	//PAINT THE SONG
@@ -250,29 +257,22 @@ function drawSong(song, time) {
 			//console.log(song.song[i][1][noteSteps]);
 			var yPos = song.song[i][0]*(96+32*song.difficulty)-((96+32*song.difficulty)*currentMeasure)+64;
 			if(yPos > -128 && yPos < 1088 && stepsArray[song.song[i][0]].is_playable){
-				switch(song.song[i][1][noteSteps]){
-					case 0: //left
-					case 1: //up
-						context.drawImage(img[4],128*(Math.floor(currentMeasure)%4),1024+song.song[i][1][noteSteps]*128,128,128,480+16+song.song[i][1][noteSteps]*160,yPos,128,128);
-					break;
-					case 2: //right
-					case 3: //down
-						context.drawImage(img[4],128*(Math.floor(currentMeasure)%4),1024+(5-song.song[i][1][noteSteps])*128,128,128,480+16+song.song[i][1][noteSteps]*160,yPos,128,128);
-					break;
-				}
+				context.drawImage(img[4],128*(Math.floor(currentMeasure)%4),1024+song.song[i][1][noteSteps]*128,128,128,480+16+song.song[i][1][noteSteps]*160,yPos,128,128);
 			}
 		}
 	}
 
 	context.lineWidth = 3;
+	context.textAlign = "center";
 	context.strokeStyle = "black";
 	context.fillStyle = "white";
 	context.font = "40pt nukamiso";
-	context.strokeText(song.title, 0, 880);
-	context.fillText(song.title, 0, 880);
+	context.strokeText(song.title, canvasWidth/2, 860);
+	context.fillText(song.title, canvasWidth/2, 860);
 	context.font = "20pt nukamiso";
-	context.strokeText(song.artist, 0, 820);
-	context.fillText(song.artist, 0, 820);
+	context.strokeText(song.artist, canvasWidth/2, 800);
+	context.fillText(song.artist, canvasWidth/2, 800);
+	context.textAlign = "start";
 
 	//----------
 	//CHECK KEYS
@@ -336,7 +336,7 @@ function drawSong(song, time) {
 				//TODO: Give some points according to error margin
 				marginToAdd = Math.min(stepsArray[stepsArrayKeys[currentStep]].margin_by_excess - currentMeasure, errorMargin);
 				marginPoints = Math.abs(stepsArrayKeys[currentStep] - currentMeasure);
-				console.log(marginPoints);
+				//console.log(marginPoints);
 				//-----------------
 				//SCORE CALCULATION
 				//-----------------
@@ -429,13 +429,48 @@ function drawSong(song, time) {
 		}
 	}
 
+	drawScore();
+	context.textBaseline = "middle";
+	context.textAlign = "center";
 	context.fillStyle = "white";
-	context.font = '40pt nukamiso';
-	context.strokeText(padPoints(score.points), 1300, 60);
-	context.fillText(padPoints(score.points), 1300, 60);
+	context.font = "60pt nukamiso";
+	context.strokeText(padPoints(score.points), 1403.5, 77.5);
+	context.fillText(padPoints(score.points), 1403.5, 77.5);
+	context.strokeText(padLife(score.life) + "%", 196.5, 77.5);
+	context.fillText(padLife(score.life) + "%", 196.5, 77.5);
+	context.textAlign = "start";
 }
 
 function padPoints(score){
 	var score = "000000000" + score;
 	return score.substr(score.length-9);
+}
+
+function padLife(score){
+	return parseFloat(Math.round(score*10)/10).toFixed(1);
+}
+
+function drawLife(){
+	context.drawImage(img[5], 0, 0);
+	context.drawImage(img[6], 0, 0, score.life/100*445, 155, 0, 0, score.life/100*445, 155);
+}
+
+function drawScore(){
+	context.drawImage(img[7], 1155, 0);
+	context.drawImage(
+		img[8],
+		Math.round(Math.max(0,445-(score.points/(perfectScore*0.75)*445))),
+		0,
+		Math.round(Math.max(0,score.points/(perfectScore*0.75)*445)),
+		155,
+		Math.round(1600-(Math.min(445,(score.points/(perfectScore*0.75)*445)))),
+		0,
+		Math.round(Math.min(445,score.points/(perfectScore*0.75)*445)),
+		155);
+
+	//DEBUG
+	// context.fillText("sx:    " + Math.max(0,445-(score.points/(perfectScore*0.75)*445)), 1200, 375);
+	// context.fillText("swidth:" + Math.max(0,score.points/(perfectScore*0.75)*445), 1200, 400);
+	// context.fillText("x:     " + (1600-(Math.min(445,(score.points/(perfectScore*0.75)*445)))), 1200, 425);
+	// context.fillText("width: " + Math.min(445,score.points/(perfectScore*0.75)*445), 1200, 450);
 }

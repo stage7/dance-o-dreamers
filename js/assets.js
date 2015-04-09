@@ -9,7 +9,11 @@ var items = ['./img/arrow0.png',
              './img/arrow1.png',
              './img/arrow2.png',
              './img/arrow3.png',
-             './img/arrows.png'];
+             './img/arrows.png',
+             './img/holder-life.png',
+             './img/life-meter.png',
+             './img/holder-points.png',
+             './img/score-meter.png'];
 
 // Following code by Paul Grime (http://stackoverflow.com/users/319878/paul-grime)
 // From Stack Overflow (http://stackoverflow.com/questions/8682085/can-i-sync-up-multiple-image-onload-calls)
