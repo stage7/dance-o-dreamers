@@ -4,16 +4,21 @@ var context = canvas.getContext('2d');
 var canvasWidth = canvas.width;
 var canvasHeight = canvas.height;
 
-var img = new Array();
-var items = ['./img/arrow0.png',
-             './img/arrow1.png',
-             './img/arrow2.png',
-             './img/arrow3.png',
-             './img/arrows.png',
+var assets = {};
+var items = ['./img/arrows.png',
              './img/holder-life.png',
              './img/life-meter.png',
              './img/holder-points.png',
-             './img/score-meter.png'];
+             './img/score-meter.png',
+             './img/perfect.png',
+             './img/awesome.png'];
+var itemNames = ['arrows',
+                 'holderLife',
+                 'lifeMeter',
+                 'holderPoints',
+                 'scoreMeter',
+                 'perfect',
+                 'awesome'];
 
 // Following code by Paul Grime (http://stackoverflow.com/users/319878/paul-grime)
 // From Stack Overflow (http://stackoverflow.com/questions/8682085/can-i-sync-up-multiple-image-onload-calls)
@@ -27,7 +32,7 @@ function loader(items, thingToDo, allDone) {
         return;
     }
 
-    if ("undefined" === items.length) {
+    if (items.length === "undefined") {
         // convert single item to array.
         items = [items];
     }
@@ -37,7 +42,7 @@ function loader(items, thingToDo, allDone) {
     // this callback counts down the things to do.
     var thingToDoCompleted = function (items, i) {
         count--;
-        if (0 == count) {
+        if (count == 0) {
             allDone(items);
         }
     };
@@ -59,9 +64,9 @@ function loadImage(items, i, onComplete) {
         // notify that we're done.
         onComplete(items, i);
     }
-    img[i] = new Image();
-    img[i].addEventListener("load", onLoad, false);
-    img[i].src = items[i];
+    assets[itemNames[i]] = new Image();
+    assets[itemNames[i]].addEventListener("load", onLoad, false);
+    assets[itemNames[i]].src = items[i];
 }
 
 loader(items, loadImage, function () {

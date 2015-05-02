@@ -42,7 +42,6 @@ var canPlay = [true, true, true, true];
 //----
 //TIME
 //----
-var tNow = 0;
 var start;
 var timer;
 
@@ -54,10 +53,15 @@ var playableStepsArray = new Array();
 var playableStepsCount = 0;
 var noteError = false;
 var currentRightSteps = 0;
-var fakeSteps = 0;
+var fakeSteps = false;
 var marginToAdd;
 var marginPoints;
 var currentMeasure = 0;
+var currentTime = 0;
+
+//-----------------
+//ANIMATION CONTROL
+//-----------------
 
 //-----
 //SCORE
@@ -173,13 +177,9 @@ function gameLoop(song) {
 	context.clearRect(0, 0, canvas.width, canvas.height);
 	testKeys();
 
-	// var tDelta = tNow;
-	// var d = new Date();
-	// var t = d.toLocaleTimeString();
-	// tNow = d-start;
-	// tDelta = tNow - tDelta;
-
-	drawSong(song, timer.lap());
+	currentTime = timer.lap();
+	drawSong(song, currentTime);
+	drawAnimations();
 
 	// setTimeout(function(){
 	// 	gameLoop(song);
@@ -191,47 +191,47 @@ function testKeys() {
 	if (keyState[37] || keyState[65]){ // left, 'a'
 		keyLeft = true;
 		//context.drawImage(img[0],480+32,80,96,96);
-		context.drawImage(img[4],128*(Math.floor(currentMeasure)%4),512,128,128,480+16,80,128,128);
+		context.drawImage(assets['arrows'],128*(Math.floor(currentMeasure)%4),512,128,128,480+16,80,128,128);
 	}
 	if (keyState[38] || keyState[87]){ // up, 'w'
 		//console.log("up");
 		keyUp = true;
 		//context.drawImage(img[1],480+192,80,96,96);
-		context.drawImage(img[4],128*(Math.floor(currentMeasure)%4),640,128,128,480+176,80,128,128);
+		context.drawImage(assets['arrows'],128*(Math.floor(currentMeasure)%4),640,128,128,480+176,80,128,128);
 	}
 	if (keyState[39] || keyState[68]){ // right, 'd'
 		//console.log("right");
 		keyRight = true;
 		//context.drawImage(img[3],480+512,80,96,96);
-		context.drawImage(img[4],128*(Math.floor(currentMeasure)%4),768,128,128,480+496,80,128,128);
+		context.drawImage(assets['arrows'],128*(Math.floor(currentMeasure)%4),768,128,128,480+496,80,128,128);
 	}
 	if (keyState[40] || keyState[83]){ // down, 's'
 		//console.log("down");
 		keyDown = true;
 		//context.drawImage(img[2],480+352,80,96,96);
-		context.drawImage(img[4],128*(Math.floor(currentMeasure)%4),896,128,128,480+336,80,128,128);
+		context.drawImage(assets['arrows'],128*(Math.floor(currentMeasure)%4),896,128,128,480+336,80,128,128);
 	}
 
 	/* Keys up */
 	if (!keyState[37] && !keyState[65]){ // left, 'a'
 		keyLeft = false;
 		//context.drawImage(img[0],480+16,64);
-		context.drawImage(img[4],128*(Math.floor(currentMeasure)%4),0,128,128,480+16,80,128,128);
+		context.drawImage(assets['arrows'],128*(Math.floor(currentMeasure)%4),0,128,128,480+16,80,128,128);
 	}
 	if (!keyState[38] && !keyState[87]){ // up, 'w'
 		keyUp = false;
 		//context.drawImage(img[1],480+176,64);
-		context.drawImage(img[4],128*(Math.floor(currentMeasure)%4),128,128,128,480+176,80,128,128);
+		context.drawImage(assets['arrows'],128*(Math.floor(currentMeasure)%4),128,128,128,480+176,80,128,128);
 	}
 	if (!keyState[39] && !keyState[68]){ // right, 'd'
 		keyRight = false;
 		//context.drawImage(img[3],480+496,64);
-		context.drawImage(img[4],128*(Math.floor(currentMeasure)%4),256,128,128,480+496,80,128,128);
+		context.drawImage(assets['arrows'],128*(Math.floor(currentMeasure)%4),256,128,128,480+496,80,128,128);
 	}
 	if (!keyState[40] && !keyState[83]){ // down, 's'
 		keyDown = false;
 		//context.drawImage(img[2],480+336,64);
-		context.drawImage(img[4],128*(Math.floor(currentMeasure)%4),384,128,128,480+336,80,128,128);
+		context.drawImage(assets['arrows'],128*(Math.floor(currentMeasure)%4),384,128,128,480+336,80,128,128);
 	} 
 }
 
@@ -249,6 +249,9 @@ function drawSong(song, time) {
 	roundRect(context, 480, 16, 640, 904, 20, true, false);
 	drawLife();
 
+	context.save();
+	context.rect(480, 16, 640, 904);
+	context.clip();
 	//--------------
 	//PAINT THE SONG
 	//--------------
@@ -257,10 +260,12 @@ function drawSong(song, time) {
 			//console.log(song.song[i][1][noteSteps]);
 			var yPos = song.song[i][0]*(96+32*song.difficulty)-((96+32*song.difficulty)*currentMeasure)+64;
 			if(yPos > -128 && yPos < 1088 && stepsArray[song.song[i][0]].is_playable){
-				context.drawImage(img[4],128*(Math.floor(currentMeasure)%4),1024+song.song[i][1][noteSteps]*128,128,128,480+16+song.song[i][1][noteSteps]*160,yPos,128,128);
+				context.drawImage(assets['arrows'],128*(Math.floor(currentMeasure)%4),1024+song.song[i][1][noteSteps]*128,128,128,480+16+song.song[i][1][noteSteps]*160,yPos,128,128);
 			}
 		}
 	}
+
+	context.restore();
 
 	context.lineWidth = 3;
 	context.textAlign = "center";
@@ -281,7 +286,6 @@ function drawSong(song, time) {
 	if(song.song.hasOwnProperty(currentStep)){
 		noteError = false;
 		currentRightSteps = 0;
-		fakeSteps = 0;
 		playableSteps = song.song[currentStep][1];
 		playableStepsCount = 0;
 		playableStepsArray.length = 0;
@@ -310,6 +314,7 @@ function drawSong(song, time) {
 			currentMeasure <= stepsArray[stepsArrayKeys[currentStep]].margin_by_excess &&
 			stepsArray[stepsArrayKeys[currentStep]].is_playable
 		){
+			fakeSteps = false;
 			//Compare canPlay's true items with pressed steps and valid note steps
 			for(var i=0; i<4; i++){
 				//If the player releases a step that is marked as fake, mark it as playable
@@ -325,13 +330,13 @@ function drawSong(song, time) {
 				}
 				//If the player has an unplayable step pressed, the note cannot be held as valid
 				if(noteError == false && canPlay[i] == false && arrowKeys[i] == true)
-					fakeSteps++;
+					fakeSteps = true;
 			}
 
 			//------------------------------------------------------------
 			//THE NOTE IS PLAYABLE AND ALL THE STEPS ARE RIGHT. WELL DONE!
 			//------------------------------------------------------------
-			if(playableStepsArray.equals(arrowKeys) && fakeSteps == 0 && noteError == false){
+			if(playableStepsArray.equals(arrowKeys) && fakeSteps == false && noteError == false){
 				//console.log("OK");
 				//TODO: Give some points according to error margin
 				marginToAdd = Math.min(stepsArray[stepsArrayKeys[currentStep]].margin_by_excess - currentMeasure, errorMargin);
@@ -345,11 +350,13 @@ function drawSong(song, time) {
 					score.perfect++;
 					score.combo++;
 					score.points = score.points + Math.round((errorMargin - marginPoints) * (score.combo + 1) * song.difficulty * 2000);
+					animations.push(["drawRating", [time, 'perfect']]);
 					//score.life
 				}else if(marginPoints < errorMargin/7.5){
 					score.awesome++;
 					score.combo++;
 					score.points = score.points + Math.round((errorMargin - marginPoints) * (score.combo + 1) * song.difficulty * 1750);
+					animations.push(["drawRating", [time, 'awesome']]);
 					//score.life
 				}else if(marginPoints < errorMargin/4){
 					score.great++;
@@ -404,6 +411,13 @@ function drawSong(song, time) {
 				//console.log(score);
 				//console.log("-----------");
 			}
+		}else{
+			for(var i=0; i<4; i++){
+				if(arrowKeys[i] == true){
+					fakeSteps = true;
+					break;
+				}
+			}
 		}
 
 		//console.log(stepsArray[stepsArrayKeys[currentStep]]);
@@ -451,14 +465,14 @@ function padLife(score){
 }
 
 function drawLife(){
-	context.drawImage(img[5], 0, 0);
-	context.drawImage(img[6], 0, 0, score.life/100*445, 155, 0, 0, score.life/100*445, 155);
+	context.drawImage(assets['holderLife'], 0, 0);
+	context.drawImage(assets['lifeMeter'], 0, 0, score.life/100*445, 155, 0, 0, score.life/100*445, 155);
 }
 
 function drawScore(){
-	context.drawImage(img[7], 1155, 0);
+	context.drawImage(assets['holderPoints'], 1155, 0);
 	context.drawImage(
-		img[8],
+		assets['scoreMeter'],
 		Math.round(Math.max(0,445-(score.points/(perfectScore*0.75)*445))),
 		0,
 		Math.round(Math.max(0,score.points/(perfectScore*0.75)*445)),

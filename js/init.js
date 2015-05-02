@@ -1,4 +1,5 @@
 var songs;
+var animations = Array();
 
 // Following code by Tomáš Zato (http://stackoverflow.com/users/607407/tom%c3%a1%c5%a1-zato)
 // From Stack Overflow (http://stackoverflow.com/a/14853974)
