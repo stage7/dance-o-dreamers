@@ -145,7 +145,7 @@ function startGame(){
 
 function postLoadSong(bufferList) {
 	timer = new Tock({
-		interval: 10,
+		interval: 16.6666,
 		callback: function(){gameLoop(song);}
 	});
 	
@@ -362,16 +362,19 @@ function drawSong(song, time) {
 					score.great++;
 					score.combo++;
 					score.points = score.points + Math.round((errorMargin - marginPoints) * (score.combo + 1) * song.difficulty * 1500);
+					animations.push(["drawRating", [time, 'great']]);
 					//score.life
 				}else if(marginPoints < errorMargin/1.5){
 					score.ok++;
 					score.combo++;
 					score.points = score.points + Math.round((errorMargin - marginPoints) * (score.combo + 1) * song.difficulty);
+					animations.push(["drawRating", [time, 'ok']]);
 					//score.life
 				}else if(marginPoints < errorMargin){
 					score.bad++;
 					score.combo++;
 					score.points = score.points + Math.round((errorMargin - marginPoints) * (score.combo + 1) * song.difficulty * 500);
+					animations.push(["drawRating", [time, 'bad']]);
 					//score.life
 				}
 				score.life = Math.min(100, score.life + (1 / song.difficulty) * (errorMargin - marginPoints) * 10);
@@ -399,6 +402,7 @@ function drawSong(song, time) {
 				//TODO: life calculation
 				score.miss++;
 				score.life = Math.max(0, score.life - Math.sqrt(score.combo) - song.difficulty * 1.5);
+				animations.push(["drawRating", [time, 'miss']]);
 				score.combo = 0;
 				if(stepsArray.hasOwnProperty(currentStep+1)){
 					stepsArray[stepsArrayKeys[currentStep]].margin_by_default = Math.max(stepsArray[stepsArrayKeys[currentStep]] - marginToAdd, stepsArray[stepsArrayKeys[currentStep]] - errorMargin);
@@ -435,6 +439,7 @@ function drawSong(song, time) {
 			//TODO: life calculation
 			score.miss++;
 			score.life = Math.max(0, score.life - Math.sqrt(score.combo) - song.difficulty * 1.5);
+			animations.push(["drawRating", [time, 'miss']]);
 			score.combo = 0;
 			currentStep++;
 			//console.log(score);
@@ -453,6 +458,8 @@ function drawSong(song, time) {
 	context.strokeText(padLife(score.life) + "%", 196.5, 77.5);
 	context.fillText(padLife(score.life) + "%", 196.5, 77.5);
 	context.textAlign = "start";
+
+	drawCombo();
 }
 
 function padPoints(score){
@@ -487,4 +494,30 @@ function drawScore(){
 	// context.fillText("swidth:" + Math.max(0,score.points/(perfectScore*0.75)*445), 1200, 400);
 	// context.fillText("x:     " + (1600-(Math.min(445,(score.points/(perfectScore*0.75)*445)))), 1200, 425);
 	// context.fillText("width: " + Math.min(445,score.points/(perfectScore*0.75)*445), 1200, 450);
+}
+
+function drawCombo(){
+	if(score.combo > 0){
+		context.save();
+		context.shadowColor = "black";
+		context.shadowOffsetX = 10;
+		context.shadowOffsetY = -10;
+		context.shadowBlur = 0;
+		context.font = "140pt swiss";
+		context.lineWidth = 15;
+		context.textBaseline = "middle";
+		context.textAlign = "center";
+		context.strokeStyle = "black";
+		context.fillStyle = "red";
+		context.strokeText(score.combo, 240, canvasHeight/2);
+		context.fillText(score.combo, 240, canvasHeight/2);
+
+		context.shadowOffsetX = 5;
+		context.shadowOffsetY = -5;
+		context.font = "30pt swiss";
+		context.fillStyle = "white";
+		context.strokeText("COMBO", 300, canvasHeight/2 + 60);
+		context.fillText("COMBO", 300, canvasHeight/2 + 60);
+		context.restore();
+	}
 }
