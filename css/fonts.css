@@ -2,3 +2,7 @@
     font-family: "nukamiso";
     src: url('../font.otf');
 }
+@font-face {
+    font-family: "swiss";
+    src: url('../swiss.ttf');
+}
