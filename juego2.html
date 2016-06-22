@@ -2,7 +2,7 @@
 <html>
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
-	<title>TITLE</title>
+	<title>Dance-o-Dreamers v0.1</title>
 	<link rel="stylesheet" type="text/css" href="./css/fonts.css">
 	<style>
 		body {
@@ -20,38 +20,32 @@
 			left: 0;
 		}
 	</style>
-	<script type="text/javascript" src="./js/init.js"></script>
-	<script type="text/javascript" src="./js/buffer-loader.js"></script>
-	<script type="text/javascript" src="./js/jquery.js"></script>
-	<script type="text/javascript" src="./js/tock.js"></script>
-	<script type="text/javascript" src="./js/require.js"></script>
-	<!--<script type="text/javascript" src="./js/songs.js"></script>-->
-	<!--<script type="text/javascript" src="./js/game.js"></script>-->
-	<!--<LINK REL="Stylesheet" HREF="style.css" TYPE="text/css" TITLE="Stylesheet" MEDIA="screen, print">-->
+
 </head>
 
 <body>
-	<script>
-	    // load fonts before loading the game
-	    WebFontConfig = {
-	        custom: {
-	            families: ['nukamiso','swiss'],
-	            urls: ['./css/fonts.css']
-	        },
-	        active: function() {
-	            //myMain();
-	        }
-	    };
-	</script>
+	<!--<script type="text/javascript" src="./js/buffer-loader.js"></script>-->
+	<script type="text/javascript" src="./js/preload.js"></script>
+	<script type="text/javascript" src="./js/sound.js"></script>
+	<script type="text/javascript" src="./js/jquery.js"></script>
+	<script type="text/javascript" src="./js/init.js"></script>
+	<script type="text/javascript" src="./js/tock.js"></script>
+	<script type="text/javascript" src="./js/require.js"></script>
+
+	<script type="text/javascript" src="./languages/en.js"></script>
+	<script type="text/javascript" src="./languages/es.js"></script>
+	<script type="text/javascript" src="./languages/ja.js"></script>
 	
 	<video id="video"></video>
 	<canvas id="game" width="1600" height="900"></canvas>
 
-	<script src="./js/webfont.js"></script>
-	<script src="./js/songs.js"></script>
-	<script src="./js/assets.js"></script>
-	<script src="./js/anim.js"></script>
-	<script src="./js/test.js"></script>
+	<script type="text/javascript" src="./js/util.js"></script>
+	<script type="text/javascript" src="./js/songs.js"></script>
+	<script type="text/javascript" src="./js/assets.js"></script>
+	<script type="text/javascript" src="./js/webfont.js"></script>
+	<script type="text/javascript" src="./js/anim.js"></script>
+	<!--<script type="text/javascript" src="./js/menu.js"></script>-->
+	<script type="text/javascript" src="./js/engine.js"></script>
 
 </body>
 </html>

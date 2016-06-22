@@ -1,17 +1,8 @@
 //----
 //KEYS
 //----
-var keyState = {};
 var keyStatePrevious = {};
 var countKeyStatePrevious = 0;
-
-window.addEventListener('keydown',function(e){
-	keyState[e.keyCode || e.which] = true;
-},true);
-
-window.addEventListener('keyup',function(e){
-	keyState[e.keyCode || e.which] = false;
-},true);
 
 var keyLeft = false;
 var keyUp = false;
@@ -20,16 +11,6 @@ var keyDown = false;
 
 var arrowKeys = [false, false, false, false];
 var countArrowKeys = 0;
-
-var KEY_LEFT = 37;
-var KEY_UP = 38;
-var KEY_RIGHT = 39;
-var KEY_DOWN = 40;
-
-var KEY_A = 65;
-var KEY_W = 87;
-var KEY_D = 69;
-var KEY_S = 83;
 
 var ARROW_LEFT = 0;
 var ARROW_UP = 1;
@@ -43,7 +24,6 @@ var canPlay = [true, true, true, true];
 //TIME
 //----
 var start;
-var timer;
 
 //-----------------
 //SOME USEFUL STUFF
@@ -58,6 +38,8 @@ var marginToAdd;
 var marginPoints;
 var currentMeasure = 0;
 var currentTime = 0;
+var isGameOver = false; //stop playing if it is set to true;
+var currentMeasureInt = null;
 
 //-----------------
 //ANIMATION CONTROL
@@ -78,10 +60,13 @@ var videoTag = document.getElementById("video");
 //SONGS
 //-----
 var song;
+var songQueue;
+var songPlay;
 var errorMargin = 0.5; //maximum threshold in bpm by default/exceed to successfully play a step
 var stepsArray; //basic step data: number of steps, whether it is playable or not, playability range
 var stepsArrayKeys; //stores the measures on which every song step is triggered
 var currentStep; //step number (not measure) to be played
+
 load_songs();
 
 function startGame(){
@@ -126,6 +111,7 @@ function startGame(){
 		bad: 0,
 		miss: 0
 	};
+	isGameOver = false;
 
 	//Calculate the perfect score for this song
 	for(var i=0; i<song.song.length; i++){
@@ -134,7 +120,11 @@ function startGame(){
 
 	videoTag.src = "./songs/memories/" + song.video;
 	
-	loadAudio("memories", song.audio);
+	//loadAudio("memories", song.audio);
+	songQueue = new createjs.LoadQueue();
+	songQueue.installPlugin(createjs.Sound);
+	songQueue.addEventListener("complete", postLoadSong);
+	songQueue.loadFile({id:"songFile", src:'./songs/' + song.songUniqueName + '/' + song.audio});
 
 	// videoTag.addEventListener('play', function(){
 	// 	drawVideo(this, context, canvasWidth, canvasHeight);
@@ -145,15 +135,16 @@ function startGame(){
 
 function postLoadSong(bufferList) {
 	timer = new Tock({
-		interval: 16.6666,
-		callback: function(){gameLoop(song);}
+		interval: 16.6666
 	});
 	
 	// Create two sources and play them both together.
-	source = audioContext.createBufferSource();
-	source.buffer = bufferList[0];
-	source.connect(audioContext.destination);
-	source.start(song.delay/1000, song.timeAdjustment/1000);
+	// source = audioContext.createBufferSource();
+	// source.buffer = bufferList[0];
+	// source.connect(audioContext.destination);
+	// source.start(song.delay/1000, song.timeAdjustment/1000);
+	songPlay = null;
+	songPlay = createjs.Sound.play("songFile", {delay: song.delay, offset: song.timeAdjustment});
 
 	//console.log(stepsArray);
 	//console.log(stepsArrayKeys);
@@ -161,7 +152,7 @@ function postLoadSong(bufferList) {
 	timer.start();
 	videoTag.play();
 	videoTag.volume = 0;
-	//gameLoop(song);
+	gameLoop(song);
 }
 
 function drawVideo(videoTag, context, canvasWidth, canvasHeight){
@@ -172,6 +163,9 @@ function drawVideo(videoTag, context, canvasWidth, canvasHeight){
 }
 
 function gameLoop(song) {
+	requestAnimationFrame(function(){
+		gameLoop(song);
+	});
 	//context.fillStyle = "#EEEEEE";
 	//context.fillRect(0, 0, canvas.width, canvas.height);
 	context.clearRect(0, 0, canvas.width, canvas.height);
@@ -237,7 +231,11 @@ function testKeys() {
 
 function drawSong(song, time) {
 	//drawVideo(videoTag, context, canvasWidth, canvasHeight);
-	currentMeasure = Math.round((song.bpm/60)*(time/1000)*10000) / 10000;
+	currentMeasure = Math.round((song.bpm/60)*((time)/1000)*10000) / 10000;
+	// if(currentMeasureInt != Math.floor(currentMeasure)){
+	// 	currentMeasureInt = Math.floor(currentMeasure);
+	// 	createjs.Sound.play("metronome");
+	// }
 	//console.log(currentStep);
 	//if(stepsArrayKeys.hasOwnProperty(currentStep))
 	//	console.log(stepsArray[stepsArrayKeys[currentStep]].margin_by_excess + " -- " + currentMeasure);
@@ -249,23 +247,210 @@ function drawSong(song, time) {
 	roundRect(context, 480, 16, 640, 904, 20, true, false);
 	drawLife();
 
-	context.save();
-	context.rect(480, 16, 640, 904);
-	context.clip();
 	//--------------
 	//PAINT THE SONG
 	//--------------
-	for(var i=0; i<song.song.length; i++){
-		for(var noteSteps=0; noteSteps<song.song[i][1].length; noteSteps++){
-			//console.log(song.song[i][1][noteSteps]);
-			var yPos = song.song[i][0]*(96+32*song.difficulty)-((96+32*song.difficulty)*currentMeasure)+64;
-			if(yPos > -128 && yPos < 1088 && stepsArray[song.song[i][0]].is_playable){
-				context.drawImage(assets['arrows'],128*(Math.floor(currentMeasure)%4),1024+song.song[i][1][noteSteps]*128,128,128,480+16+song.song[i][1][noteSteps]*160,yPos,128,128);
+	if(!isGameOver){
+		context.save();
+		context.rect(480, 16, 640, 904);
+		context.clip();
+		for(var i=0; i<song.song.length; i++){
+			for(var noteSteps=0; noteSteps<song.song[i][1].length; noteSteps++){
+				//console.log(song.song[i][1][noteSteps]);
+				var yPos = song.song[i][0]*(96+32*song.difficulty)-((96+32*song.difficulty)*currentMeasure)+64;
+				if(yPos > -128 && yPos < 1088 && stepsArray[song.song[i][0]].is_playable){
+					context.drawImage(assets['arrows'],128*(Math.floor(currentMeasure)%4),1024+song.song[i][1][noteSteps]*128,128,128,480+16+song.song[i][1][noteSteps]*160,yPos,128,128);
+				}
 			}
 		}
-	}
 
-	context.restore();
+		context.restore();
+
+		//----------
+		//CHECK KEYS
+		//----------
+		//console.log(keyState);
+		if(song.song.hasOwnProperty(currentStep)){
+			noteError = false;
+			currentRightSteps = 0;
+			playableSteps = song.song[currentStep][1];
+			playableStepsCount = 0;
+			playableStepsArray.length = 0;
+			for(var i=0; i<4; i++){
+				if(playableSteps.indexOf(i) > -1){
+					playableStepsArray.push(true);
+					playableStepsCount++;
+				}
+				else
+					playableStepsArray.push(false);
+			}
+			arrowKeys = [
+				typeof keyState[KEY_LEFT] === "undefined" ? false : keyState[KEY_LEFT],
+				typeof keyState[KEY_UP] === "undefined" ? false : keyState[KEY_UP],
+				typeof keyState[KEY_DOWN] === "undefined" ? false : keyState[KEY_DOWN],
+				typeof keyState[KEY_RIGHT] === "undefined" ? false : keyState[KEY_RIGHT]
+			];
+			//if(playableStepsArray.equals(arrowKeys))
+				//console.log("OK");
+
+			//-------------------------------------------------------------
+			//CHECKS IF NOTE IS PLAYABLE AND MEASURE IS WITHIN ERROR MARGIN
+			//-------------------------------------------------------------
+			if(
+				currentMeasure >= stepsArray[stepsArrayKeys[currentStep]].margin_by_default &&
+				currentMeasure <= stepsArray[stepsArrayKeys[currentStep]].margin_by_excess &&
+				stepsArray[stepsArrayKeys[currentStep]].is_playable
+			){
+				fakeSteps = false;
+				//Compare canPlay's true items with pressed steps and valid note steps
+				for(var i=0; i<4; i++){
+					//If the player releases a step that is marked as fake, mark it as playable
+					if(canPlay[i] == false && arrowKeys[i] == false){
+						canPlay[i] = true;
+					}
+
+					if(noteError == false && canPlay[i] == true){
+						if(arrowKeys[i] != playableStepsArray[i] && playableStepsArray[i] == false)
+							noteError = true;
+						else if(arrowKeys[i] == true && playableStepsArray[i] == true)
+							currentRightSteps++;
+					}
+					//If the player has an unplayable step pressed, the note cannot be held as valid
+					if(noteError == false && canPlay[i] == false && arrowKeys[i] == true)
+						fakeSteps = true;
+				}
+
+				//------------------------------------------------------------
+				//THE NOTE IS PLAYABLE AND ALL THE STEPS ARE RIGHT. WELL DONE!
+				//------------------------------------------------------------
+				if(playableStepsArray.equals(arrowKeys) && fakeSteps == false && noteError == false){
+					//console.log("OK");
+					//TODO: Give some points according to error margin
+					marginToAdd = Math.min(stepsArray[stepsArrayKeys[currentStep]].margin_by_excess - currentMeasure, errorMargin);
+					marginPoints = Math.abs(stepsArrayKeys[currentStep] - currentMeasure);
+					//console.log(marginPoints);
+					//-----------------
+					//SCORE CALCULATION
+					//-----------------
+					//TODO: life calculation
+					if(marginPoints < errorMargin/10){
+						score.perfect++;
+						score.combo++;
+						score.points = score.points + Math.round((errorMargin - marginPoints) * (score.combo + 1) * song.difficulty * 2000);
+						removeAnimation("drawRating");
+						animations.push(["drawRating", [time, 'perfect']]);
+						//score.life
+					}else if(marginPoints < errorMargin/7.5){
+						score.awesome++;
+						score.combo++;
+						score.points = score.points + Math.round((errorMargin - marginPoints) * (score.combo + 1) * song.difficulty * 1750);
+						removeAnimation("drawRating");
+						animations.push(["drawRating", [time, 'awesome']]);
+						//score.life
+					}else if(marginPoints < errorMargin/4){
+						score.great++;
+						score.combo++;
+						score.points = score.points + Math.round((errorMargin - marginPoints) * (score.combo + 1) * song.difficulty * 1500);
+						removeAnimation("drawRating");
+						animations.push(["drawRating", [time, 'great']]);
+						//score.life
+					}else if(marginPoints < errorMargin/1.5){
+						score.ok++;
+						score.combo++;
+						score.points = score.points + Math.round((errorMargin - marginPoints) * (score.combo + 1) * song.difficulty);
+						removeAnimation("drawRating");
+						animations.push(["drawRating", [time, 'ok']]);
+						//score.life
+					}else if(marginPoints < errorMargin){
+						score.bad++;
+						score.combo++;
+						score.points = score.points + Math.round((errorMargin - marginPoints) * (score.combo + 1) * song.difficulty * 500);
+						removeAnimation("drawRating");
+						animations.push(["drawRating", [time, 'bad']]);
+						//score.life
+					}
+					score.life = Math.min(100, score.life + (1 / song.difficulty) * (errorMargin - marginPoints) * 10);
+					if(stepsArray.hasOwnProperty(currentStep+1)){
+						stepsArray[stepsArrayKeys[currentStep]].margin_by_default = Math.max(stepsArray[stepsArrayKeys[currentStep]] - marginToAdd, stepsArray[stepsArrayKeys[currentStep]] - errorMargin);
+					}
+					//Set canPlay according to pressed steps
+					for(var i=0; i<4; i++)
+						canPlay[i] = !arrowKeys[i];
+					stepsArray[stepsArrayKeys[currentStep]].is_playable = false;
+					currentStep++;
+					//console.log(score);
+					//console.log("-----------");
+				}
+
+				if(score.life <= 0 && isGameOver == false){
+					isGameOver = true;
+					animations.push(["drawGameOver", [time]]);
+					songPlay.paused = true;
+					createjs.Sound.removeSound("songFile");
+					createjs.Sound.play("vinylScratch");
+					videoTag.pause();
+				}
+
+				//------------------------------------
+				//OOPS, MISTAKE MADE, NEXT NOTE ANYWAY
+				//------------------------------------
+				if(noteError == true){
+					//console.log("ERROR");
+					marginToAdd = Math.min(stepsArray[stepsArrayKeys[currentStep]].margin_by_excess - currentMeasure, errorMargin);
+					//-----------------
+					//SCORE CALCULATION
+					//-----------------
+					//TODO: life calculation
+					score.miss++;
+					score.life = Math.max(0, score.life - Math.sqrt(score.combo) - song.difficulty * 1.5);
+					removeAnimation("drawRating");
+					animations.push(["drawRating", [time, 'miss']]);
+					score.combo = 0;
+					if(stepsArray.hasOwnProperty(currentStep+1)){
+						stepsArray[stepsArrayKeys[currentStep]].margin_by_default = Math.max(stepsArray[stepsArrayKeys[currentStep]] - marginToAdd, stepsArray[stepsArrayKeys[currentStep]] - errorMargin);
+					}
+					//Set canPlay according to pressed steps
+					for(var i=0; i<4; i++)
+						canPlay[i] = !arrowKeys[i];
+					stepsArray[stepsArrayKeys[currentStep]].is_playable = false;
+					currentStep++;
+					//console.log(score);
+					//console.log("-----------");
+				}
+			}else{
+				for(var i=0; i<4; i++){
+					if(arrowKeys[i] == true){
+						fakeSteps = true;
+						break;
+					}
+				}
+			}
+
+			//console.log(stepsArray[stepsArrayKeys[currentStep]]);
+		}
+
+		//console.log(Math.floor(currentMeasure));
+		if(stepsArrayKeys.hasOwnProperty(currentStep)){
+			if(currentMeasure > stepsArray[stepsArrayKeys[currentStep]].margin_by_excess)
+				stepsArray[stepsArrayKeys[currentStep]].is_playable = false;
+
+			if(currentMeasure > stepsArray[stepsArrayKeys[currentStep]].margin_by_excess && !stepsArray[stepsArrayKeys[currentStep]].is_playable){
+				//-----------------
+				//SCORE CALCULATION
+				//-----------------
+				//TODO: life calculation
+				score.miss++;
+				score.life = Math.max(0, score.life - Math.sqrt(score.combo) - song.difficulty * 1.5);
+				removeAnimation("drawRating");
+				animations.push(["drawRating", [time, 'miss']]);
+				score.combo = 0;
+				currentStep++;
+				//console.log(score);
+				//console.log("NO ACTION");
+				//console.log("-----------");
+			}
+		}	
+	}
 
 	context.lineWidth = 3;
 	context.textAlign = "center";
@@ -279,192 +464,22 @@ function drawSong(song, time) {
 	context.fillText(song.artist, canvasWidth/2, 800);
 	context.textAlign = "start";
 
-	//----------
-	//CHECK KEYS
-	//----------
-	//console.log(keyState);
-	if(song.song.hasOwnProperty(currentStep)){
-		noteError = false;
-		currentRightSteps = 0;
-		playableSteps = song.song[currentStep][1];
-		playableStepsCount = 0;
-		playableStepsArray.length = 0;
-		for(var i=0; i<4; i++){
-			if(playableSteps.indexOf(i) > -1){
-				playableStepsArray.push(true);
-				playableStepsCount++;
-			}
-			else
-				playableStepsArray.push(false);
-		}
-		arrowKeys = [
-			typeof keyState[KEY_LEFT] === "undefined" ? false : keyState[KEY_LEFT],
-			typeof keyState[KEY_UP] === "undefined" ? false : keyState[KEY_UP],
-			typeof keyState[KEY_DOWN] === "undefined" ? false : keyState[KEY_DOWN],
-			typeof keyState[KEY_RIGHT] === "undefined" ? false : keyState[KEY_RIGHT]
-		];
-		//if(playableStepsArray.equals(arrowKeys))
-			//console.log("OK");
-
-		//-------------------------------------------------------------
-		//CHECKS IF NOTE IS PLAYABLE AND MEASURE IS WITHIN ERROR MARGIN
-		//-------------------------------------------------------------
-		if(
-			currentMeasure >= stepsArray[stepsArrayKeys[currentStep]].margin_by_default &&
-			currentMeasure <= stepsArray[stepsArrayKeys[currentStep]].margin_by_excess &&
-			stepsArray[stepsArrayKeys[currentStep]].is_playable
-		){
-			fakeSteps = false;
-			//Compare canPlay's true items with pressed steps and valid note steps
-			for(var i=0; i<4; i++){
-				//If the player releases a step that is marked as fake, mark it as playable
-				if(canPlay[i] == false && arrowKeys[i] == false){
-					canPlay[i] = true;
-				}
-
-				if(noteError == false && canPlay[i] == true){
-					if(arrowKeys[i] != playableStepsArray[i] && playableStepsArray[i] == false)
-						noteError = true;
-					else if(arrowKeys[i] == true && playableStepsArray[i] == true)
-						currentRightSteps++;
-				}
-				//If the player has an unplayable step pressed, the note cannot be held as valid
-				if(noteError == false && canPlay[i] == false && arrowKeys[i] == true)
-					fakeSteps = true;
-			}
-
-			//------------------------------------------------------------
-			//THE NOTE IS PLAYABLE AND ALL THE STEPS ARE RIGHT. WELL DONE!
-			//------------------------------------------------------------
-			if(playableStepsArray.equals(arrowKeys) && fakeSteps == false && noteError == false){
-				//console.log("OK");
-				//TODO: Give some points according to error margin
-				marginToAdd = Math.min(stepsArray[stepsArrayKeys[currentStep]].margin_by_excess - currentMeasure, errorMargin);
-				marginPoints = Math.abs(stepsArrayKeys[currentStep] - currentMeasure);
-				//console.log(marginPoints);
-				//-----------------
-				//SCORE CALCULATION
-				//-----------------
-				//TODO: life calculation
-				if(marginPoints < errorMargin/10){
-					score.perfect++;
-					score.combo++;
-					score.points = score.points + Math.round((errorMargin - marginPoints) * (score.combo + 1) * song.difficulty * 2000);
-					animations.push(["drawRating", [time, 'perfect']]);
-					//score.life
-				}else if(marginPoints < errorMargin/7.5){
-					score.awesome++;
-					score.combo++;
-					score.points = score.points + Math.round((errorMargin - marginPoints) * (score.combo + 1) * song.difficulty * 1750);
-					animations.push(["drawRating", [time, 'awesome']]);
-					//score.life
-				}else if(marginPoints < errorMargin/4){
-					score.great++;
-					score.combo++;
-					score.points = score.points + Math.round((errorMargin - marginPoints) * (score.combo + 1) * song.difficulty * 1500);
-					animations.push(["drawRating", [time, 'great']]);
-					//score.life
-				}else if(marginPoints < errorMargin/1.5){
-					score.ok++;
-					score.combo++;
-					score.points = score.points + Math.round((errorMargin - marginPoints) * (score.combo + 1) * song.difficulty);
-					animations.push(["drawRating", [time, 'ok']]);
-					//score.life
-				}else if(marginPoints < errorMargin){
-					score.bad++;
-					score.combo++;
-					score.points = score.points + Math.round((errorMargin - marginPoints) * (score.combo + 1) * song.difficulty * 500);
-					animations.push(["drawRating", [time, 'bad']]);
-					//score.life
-				}
-				score.life = Math.min(100, score.life + (1 / song.difficulty) * (errorMargin - marginPoints) * 10);
-				if(stepsArray.hasOwnProperty(currentStep+1)){
-					stepsArray[stepsArrayKeys[currentStep]].margin_by_default = Math.max(stepsArray[stepsArrayKeys[currentStep]] - marginToAdd, stepsArray[stepsArrayKeys[currentStep]] - errorMargin);
-				}
-				//Set canPlay according to pressed steps
-				for(var i=0; i<4; i++)
-					canPlay[i] = !arrowKeys[i];
-				stepsArray[stepsArrayKeys[currentStep]].is_playable = false;
-				currentStep++;
-				//console.log(score);
-				//console.log("-----------");
-			}
-
-			//------------------------------------
-			//OOPS, MISTAKE MADE, NEXT NOTE ANYWAY
-			//------------------------------------
-			if(noteError == true){
-				//console.log("ERROR");
-				marginToAdd = Math.min(stepsArray[stepsArrayKeys[currentStep]].margin_by_excess - currentMeasure, errorMargin);
-				//-----------------
-				//SCORE CALCULATION
-				//-----------------
-				//TODO: life calculation
-				score.miss++;
-				score.life = Math.max(0, score.life - Math.sqrt(score.combo) - song.difficulty * 1.5);
-				animations.push(["drawRating", [time, 'miss']]);
-				score.combo = 0;
-				if(stepsArray.hasOwnProperty(currentStep+1)){
-					stepsArray[stepsArrayKeys[currentStep]].margin_by_default = Math.max(stepsArray[stepsArrayKeys[currentStep]] - marginToAdd, stepsArray[stepsArrayKeys[currentStep]] - errorMargin);
-				}
-				//Set canPlay according to pressed steps
-				for(var i=0; i<4; i++)
-					canPlay[i] = !arrowKeys[i];
-				stepsArray[stepsArrayKeys[currentStep]].is_playable = false;
-				currentStep++;
-				//console.log(score);
-				//console.log("-----------");
-			}
-		}else{
-			for(var i=0; i<4; i++){
-				if(arrowKeys[i] == true){
-					fakeSteps = true;
-					break;
-				}
-			}
-		}
-
-		//console.log(stepsArray[stepsArrayKeys[currentStep]]);
-	}
-
-	//console.log(Math.floor(currentMeasure));
-	if(stepsArrayKeys.hasOwnProperty(currentStep)){
-		if(currentMeasure > stepsArray[stepsArrayKeys[currentStep]].margin_by_excess)
-			stepsArray[stepsArrayKeys[currentStep]].is_playable = false;
-
-		if(currentMeasure > stepsArray[stepsArrayKeys[currentStep]].margin_by_excess && !stepsArray[stepsArrayKeys[currentStep]].is_playable){
-			//-----------------
-			//SCORE CALCULATION
-			//-----------------
-			//TODO: life calculation
-			score.miss++;
-			score.life = Math.max(0, score.life - Math.sqrt(score.combo) - song.difficulty * 1.5);
-			animations.push(["drawRating", [time, 'miss']]);
-			score.combo = 0;
-			currentStep++;
-			//console.log(score);
-			//console.log("NO ACTION");
-			//console.log("-----------");
-		}
-	}
-
 	drawScore();
 	context.textBaseline = "middle";
 	context.textAlign = "center";
 	context.fillStyle = "white";
 	context.font = "60pt nukamiso";
-	context.strokeText(padPoints(score.points), 1403.5, 77.5);
-	context.fillText(padPoints(score.points), 1403.5, 77.5);
+	context.strokeText(padLeftZeros(score.points, 9), 1403.5, 77.5);
+	context.fillText(padLeftZeros(score.points, 9), 1403.5, 77.5);
 	context.strokeText(padLife(score.life) + "%", 196.5, 77.5);
 	context.fillText(padLife(score.life) + "%", 196.5, 77.5);
 	context.textAlign = "start";
 
 	drawCombo();
-}
-
-function padPoints(score){
-	var score = "000000000" + score;
-	return score.substr(score.length-9);
+//drawFinalScore();
+	if(songPlay.playState == createjs.Sound.PLAY_FINISHED){
+		drawFinalScore();
+	}
 }
 
 function padLife(score){
@@ -520,4 +535,29 @@ function drawCombo(){
 		context.fillText("COMBO", 300, canvasHeight/2 + 60);
 		context.restore();
 	}
+}
+
+function drawFinalScore(){
+	context.save();
+	context.fillStyle = "rgba(0, 0, 0, .5)";
+	roundRect(context, 400, 100, 800, 700, 20, true, false);
+	context.lineWidth = 3;
+	context.textAlign = "right";
+	context.strokeStyle = "black";
+	context.fillStyle = "white";
+	context.font = "40pt nukamiso";
+	context.strokeText(padLeftZeros(score.perfect, 4), 750, 300);
+	context.fillText(padLeftZeros(score.perfect, 4), 750, 300);
+	context.strokeText(padLeftZeros(score.awesome, 4), 750, 375);
+	context.fillText(padLeftZeros(score.awesome, 4), 750, 375);
+	context.strokeText(padLeftZeros(score.great, 4), 750, 450);
+	context.fillText(padLeftZeros(score.great, 4), 750, 450);
+
+	context.strokeText(padLeftZeros(score.ok, 4), 1100, 300);
+	context.fillText(padLeftZeros(score.ok, 4), 1100, 300);
+	context.strokeText(padLeftZeros(score.bad, 4), 1100, 375);
+	context.fillText(padLeftZeros(score.bad, 4), 1100, 375);
+	context.strokeText(padLeftZeros(score.miss, 4), 1100, 450);
+	context.fillText(padLeftZeros(score.miss, 4), 1100, 450);
+	context.restore();
 }

@@ -14,12 +14,44 @@ function drawRating(time, asset){
 		assets[asset].width * scale,
 		assets[asset].height * scale);
 	if(currentTime - time > 1000){
-		animations = [];
+		removeAnimation("drawRating");
+	}
+}
+
+function drawGameOver(time){
+	removeAnimation("drawRating");
+	if(currentTime - time <= 2000){
+		context.fillStyle = "rgba(0, 0, 0, " + ((currentTime - time) / 4000) + ")";
+		context.fillRect(0, canvas.height/2 - 100, canvas.width, 200);
+	}else{
+		context.fillStyle = "rgba(0, 0, 0, 0.5)";
+		context.fillRect(0, canvas.height/2 - 100, canvas.width, 200);
+		if(currentTime - time <= 4000){
+				context.fillStyle = "rgba(255, 255, 255, " + ((currentTime - time - 2000) / 2000) + ")";
+				context.strokeStyle = "rgba(0, 0, 0, " + ((currentTime - time - 2000) / 2000) + ")";
+		}else{
+			context.fillStyle = "rgba(255, 255, 255, 1)";
+			context.strokeStyle = "rgba(0, 0, 0, 1)";
+		}
+		context.textBaseline = "middle";
+		context.textAlign = "center";
+		context.font = "60pt nukamiso";
+		context.strokeText(languages["en"].gameOver, canvas.width/2, canvas.height/2);
+		context.fillText(languages["en"].gameOver, canvas.width/2, canvas.height/2);
+		context.textAlign = "start";
 	}
 }
 
 function drawAnimations(){
 	for(var i=0; i<animations.length; i++){
 		window[animations[i][0]].apply(this, animations[i][1]);
+	}
+}
+
+function removeAnimation(item){
+	for(var i = animations.length - 1; i >= 0; i--){ // splice modifies the array indices, therefore backwards check is used
+		if(animations[i][0] === item){
+			animations.splice(i, 1);
+		}
 	}
 }

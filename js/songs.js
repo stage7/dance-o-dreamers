@@ -3,8 +3,9 @@
 // -------------------
 
 var songList = [
-	"memories"
-	];
+	"memories",
+	"megitsune"
+];
 
 // ----------------------------------------
 // DO NOT MODIFY ANYTHING BELOW THIS LINE!!
@@ -30,23 +31,25 @@ function addSongCount(){
 	if(songCount == songList.length){
 		//alert("all loaded!");
 		//console.log(songs);
-		startGame();
+		//startGame();
+		var game = new Bergen("memories");
+		game.startGame();
 	}
 }
 
-function loadAudio(song, file){
-	// Fix up prefixing
-	window.AudioContext = window.AudioContext || window.webkitAudioContext;
-	audioContext = new AudioContext();
+// function loadAudio(song, file){
+// 	// Fix up prefixing
+// 	window.AudioContext = window.AudioContext || window.webkitAudioContext;
+// 	audioContext = new AudioContext();
 
-	bufferLoader = new BufferLoader(
-	  audioContext,
-	  ['./songs/' + song + '/' + file],
-	  postLoadSong
-	  );
+// 	bufferLoader = new BufferLoader(
+// 	  audioContext,
+// 	  ['./songs/' + song + '/' + file],
+// 	  postLoadSong
+// 	  );
 
-	bufferLoader.load();
-}
+// 	bufferLoader.load();
+// }
 
 // Following code by TechSpud (http://stackoverflow.com/users/1368849/techspud)
 // From Stack Overflow (http://stackoverflow.com/a/19364118)
@@ -73,4 +76,17 @@ function load_json(src) {
 
 	//call the postload function after a slight delay to allow the json to load
 	//window.setTimeout(postloadfunction, 100)
+}
+
+//Format of scoreSong object: [([name, co, score] (, [...]))]
+//	string	name: name of the player
+//	string	co: three letters used to identify the player's country
+//	int		score: points the player got
+function loadLocalStorageScore(song) {
+	var localStorageSong = localStorage.getItem("score" + song.charAt(0).toUpperCase() + song.slice(1));
+	return JSON.parse(localStorageSong);
+}
+
+function saveLocalStorageScore(song) {
+
 }
