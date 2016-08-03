@@ -17,7 +17,7 @@ var items = ['./img/arrows.png',
 			 './img/bad.png',
 			 './img/miss.png',
 			 './img/song-chooser-frame.png',
-			 './songs/memories/preview.png',
+			 './img/back-menu.png',
 
 			 //Flags
 			 './img/flags/flag_esp.png'];
@@ -33,7 +33,7 @@ var itemNames = ['arrows',
 				 'bad',
 				 'miss',
 				 'songChooserFrame',
-				 'preview',
+				 'backMenu',
 
 				 //Flags
 				 'flag_esp'];

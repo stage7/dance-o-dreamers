@@ -55,6 +55,8 @@ function Bergen(songId){
 	//-----------------
 	//ANIMATION CONTROL
 	//-----------------
+	this.drawAnimations = drawAnimations;
+	this.removeAnimation = removeAnimation;
 
 	//-----
 	//SCORE
@@ -79,7 +81,7 @@ function Bergen(songId){
 	this.stepsArrayKeys; //stores the measures on which every song step is triggered
 	this.currentStep; //step number (not measure) to be played
 
-	load_songs();
+	loadSongs();
 
 	this.startGame = function(){
 		//TODO: Change to load proper song
@@ -130,19 +132,24 @@ function Bergen(songId){
 			this.perfectScore += this.errorMargin * (i + 1) * this.song.difficulty * 2000;
 		}
 
-		this.videoTag.src = "./songs/memories/" + this.song.video;
+		this.videoTag.src = "./songs/" + this.songId + "/" + this.song.video;
 		//loadAudio("memories", this.song.audio);
 		this.songQueue = new createjs.LoadQueue();
 		this.songQueue.installPlugin(createjs.Sound);
 		var _this = this;
-		this.songQueue.addEventListener("complete", function(){_this.postLoadSong(_this);});
-		this.songQueue.loadFile({id:"songFile", src:'./songs/' + this.song.songUniqueName + '/' + this.song.audio});
+		//this.songQueue.addEventListener("complete", function(){_this.postLoadSong(_this);});
+		//this.songQueue.addEventListener("complete", function(){return _this;});
+		this.songQueue.addEventListener("complete", function(ev){_this.returnThis(_this);});
+		this.songQueue.loadFile({id:"songFile", src:'./songs/' + this.songId + '/' + this.song.audio});
 
 		// videoTag.addEventListener('play', function(){
 		// 	drawVideo(this, context, canvasWidth, canvasHeight);
 		// },false);
 		//videoTag.play();
+	}
 
+	this.returnThis = function(_this) {
+		return _this;
 	}
 
 	this.postLoadSong = function(_this) {
@@ -573,5 +580,51 @@ function Bergen(songId){
 		context.strokeText(window.padLeftZeros(this.score.miss, 4), 1100, 450);
 		context.fillText(window.padLeftZeros(this.score.miss, 4), 1100, 450);
 		context.restore();
+	}
+
+	this.drawRating = function(time, asset){
+		var scale = 1;
+		var deltaTime = currentTime - time;
+		if(deltaTime <= 500){
+			scale = (1-(deltaTime/500))*0.5+1;
+		}
+		context.drawImage(
+			assets[asset],
+			0,
+			0,
+			assets[asset].width,
+			assets[asset].height,
+			600 - ((assets[asset].width / 2) * scale - (assets[asset].width / 2)),
+			405 - ((assets[asset].height / 2) * scale - (assets[asset].height / 2)),
+			assets[asset].width * scale,
+			assets[asset].height * scale);
+		if(deltaTime > 1000){
+			this.removeAnimation(this, "drawRating");
+		}
+	}
+
+	this.drawGameOver = function(time){
+		var deltaTime = currentTime - time;
+		this.removeAnimation(this, "drawRating");
+		if(deltaTime <= 2000){
+			context.fillStyle = "rgba(0, 0, 0, " + ((deltaTime) / 4000) + ")";
+			context.fillRect(0, canvas.height/2 - 100, canvas.width, 200);
+		}else{
+			context.fillStyle = "rgba(0, 0, 0, 0.5)";
+			context.fillRect(0, canvas.height/2 - 100, canvas.width, 200);
+			if(deltaTime <= 4000){
+					context.fillStyle = "rgba(255, 255, 255, " + ((deltaTime - 2000) / 2000) + ")";
+					context.strokeStyle = "rgba(0, 0, 0, " + ((deltaTime - 2000) / 2000) + ")";
+			}else{
+				context.fillStyle = "rgba(255, 255, 255, 1)";
+				context.strokeStyle = "rgba(0, 0, 0, 1)";
+			}
+			context.textBaseline = "middle";
+			context.textAlign = "center";
+			context.font = "60pt nukamiso";
+			context.strokeText(languages["en"].gameOver, canvas.width/2, canvas.height/2);
+			context.fillText(languages["en"].gameOver, canvas.width/2, canvas.height/2);
+			context.textAlign = "start";
+		}
 	}
 }

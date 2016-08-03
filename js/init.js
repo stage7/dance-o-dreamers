@@ -1,5 +1,60 @@
+var languages;
 var songs;
 var animations = Array();
+var timer;
+var currentTime;
+var animationFrame;
+
+//-----
+// KEYS
+//-----
+var keyState = {};
+var lockedKeys = {};
+
+var KEY_LEFT = 37;
+var KEY_UP = 38;
+var KEY_RIGHT = 39;
+var KEY_DOWN = 40;
+var KEY_ENTER = 13;
+
+var KEY_A = 65;
+var KEY_W = 87;
+var KEY_D = 69;
+var KEY_S = 83;
+
+window.addEventListener('keydown',function(e){
+	keyState[e.keyCode || e.which] = true;
+},true);
+
+window.addEventListener('keyup',function(e){
+	keyState[e.keyCode || e.which] = false;
+},true);
+
+var soundQueue = new createjs.LoadQueue();
+//createjs.Sound.alternateExtensions = ["mp3"];
+soundQueue.installPlugin(createjs.Sound);
+//soundQueue.addEventListener("fileload", handleFileLoad);
+soundQueue.addEventListener("complete", handleComplete);
+soundQueue.loadManifest([
+	{id:"vinylScratch", src:"./audio/vinyl-scratch.wav"},
+	{id:"metronome", src:"./audio/metronome.wav"}
+]);
+
+function handleComplete(){
+	//createjs.Sound.play("vinylScratch");
+	//loadSongsMenu();
+	var menu = new Menu();
+	loadSongs(menu);
+	//menu.songsLoaded(menu);
+	// if (loadSongs() == 1){
+	// 	console.log("ENTRA");
+	// 	menu.songsLoaded(menu);
+	// }
+}
+
+function songsLoaded(obj){
+	obj.songsLoaded(obj);
+}
 
 // Following code by Tomáš Zato (http://stackoverflow.com/users/607407/tom%c3%a1%c5%a1-zato)
 // From Stack Overflow (http://stackoverflow.com/a/14853974)
@@ -72,3 +127,33 @@ function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
 		ctx.fill();
 	}        
 }
+
+// http://paulirish.com/2011/requestanimationframe-for-smart-animating/
+// http://my.opera.com/emoller/blog/2011/12/20/requestanimationframe-for-smart-er-animating
+ 
+// requestAnimationFrame polyfill by Erik Möller
+// fixes from Paul Irish and Tino Zijdel
+(function() {
+    var lastTime = 0;
+    var vendors = ['ms', 'moz', 'webkit', 'o'];
+    for(var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+        window.requestAnimationFrame = window[vendors[x]+'RequestAnimationFrame'];
+        window.cancelAnimationFrame = window[vendors[x]+'CancelAnimationFrame']
+                                   || window[vendors[x]+'CancelRequestAnimationFrame'];
+    }
+ 
+    if (!window.requestAnimationFrame)
+        window.requestAnimationFrame = function(callback, element) {
+            var currTime = new Date().getTime();
+            var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+            var id = window.setTimeout(function() { callback(currTime + timeToCall); },
+              timeToCall);
+            lastTime = currTime + timeToCall;
+            return id;
+        };
+ 
+    if (!window.cancelAnimationFrame)
+        window.cancelAnimationFrame = function(id) {
+            clearTimeout(id);
+        };
+}());

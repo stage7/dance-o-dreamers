@@ -1,16 +1,3 @@
-// -------------------
-// ADD YOUR SONGS HERE
-// -------------------
-
-var songList = [
-	"memories",
-	"megitsune"
-];
-
-// ----------------------------------------
-// DO NOT MODIFY ANYTHING BELOW THIS LINE!!
-// ----------------------------------------
-
 var audioContext;
 var bufferLoader;
 var source;
@@ -18,10 +5,14 @@ var songCount = 0;
 
 //load_json("./songs/memories/song.js");
 
-function load_songs(){
+function loadSongs(obj){
 	for(var i = 0; i < songList.length; i++){
 		require(["./songs/" + songList[i] + "/song"], function(){
-			addSongCount();
+			//menu.addSongCount(menu);
+			songCount++;
+			if (songCount == songList.length){
+				songsLoaded(obj);
+			}
 		});
 	}
 }
